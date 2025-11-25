@@ -31,4 +31,12 @@ describe('AlumnosService (integration)', () => {
     expect(alumnos.length).toBe(1);
     expect(alumnos[0].nombre).toBe('Ana');
   });
+
+   it('no debería permitir dos alumnos con el mismo email', async () => {
+    await service.create({ nombre: 'Ana', email: 'duplicado@test.com' });
+
+    await expect(
+      service.create({ nombre: 'Otra', email: 'duplicado@test.com' }),
+    ).rejects.toThrow();
+  });
 });

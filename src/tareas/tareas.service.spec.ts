@@ -5,6 +5,7 @@ import { TareasService } from './tareas.service';
 import { Tarea } from './tarea.entity';
 import { Alumno } from '../alumnos/alumno.entity';
 import { Materia } from '../materias/materia.entity';
+import { NotFoundException } from '@nestjs/common';
 
 describe('TareasService (unit)', () => {
   let service: TareasService;
@@ -70,5 +71,36 @@ describe('TareasService (unit)', () => {
     expect(tareasRepo.create).toHaveBeenCalled();
     expect(tareasRepo.save).toHaveBeenCalled();
     expect(result.id).toBe(99);
+  });
+   it('create debe lanzar NotFoundException si el alumno no existe', async () => {
+    (alumnosRepo.findOne as jest.Mock).mockResolvedValue(null); // alumno no encontrado
+    (materiasRepo.findOne as jest.Mock).mockResolvedValue({ id: 2 } as Materia);
+
+    const dto = {
+      titulo: 'Tarea prueba',
+      descripcion: 'desc',
+      fechaEntrega: '2025-12-01',
+      alumnoId: 123,
+      materiaId: 2,
+    };
+
+    await expect(service.create(dto as any)).rejects.toBeInstanceOf(NotFoundException);
+    expect(alumnosRepo.findOne).toHaveBeenCalledWith({ where: { id: 123 } });
+  });
+
+  it('create debe lanzar NotFoundException si la materia no existe', async () => {
+    (alumnosRepo.findOne as jest.Mock).mockResolvedValue({ id: 1 } as Alumno);
+    (materiasRepo.findOne as jest.Mock).mockResolvedValue(null); // materia no encontrada
+
+    const dto = {
+      titulo: 'Tarea prueba',
+      descripcion: 'desc',
+      fechaEntrega: '2025-12-01',
+      alumnoId: 1,
+      materiaId: 999,
+    };
+
+    await expect(service.create(dto as any)).rejects.toBeInstanceOf(NotFoundException);
+    expect(materiasRepo.findOne).toHaveBeenCalledWith({ where: { id: 999 } });
   });
 });
